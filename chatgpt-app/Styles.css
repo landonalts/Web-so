@@ -1,0 +1,47 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #10a37f;
+    --primary-dark: #0d8c6d;
+    --secondary: #343541;
+    --accent: #ff6b6b;
+    --text: #ffffff;
+    --text-secondary: #8e8ea0;
+    --bg: #343541;
+    --bg-secondary: #40414f;
+    --border: #565869;
+    --success: #10a37f;
+    --warning: #f39c12;
+    --error: #e74c3c;
+}
+
+[data-theme="light"] {
+    --primary: #10a37f;
+    --primary-dark: #0d8c6d;
+    --secondary: #ffffff;
+    --accent: #ff6b6b;
+    --text: #343541;
+    --text-secondary: #6e6e80;
+    --bg: #ffffff;
+    --bg-secondary: #f7f7f8;
+    --border: #d1d5db;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top
