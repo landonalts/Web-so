@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Pro - Full Featured AI Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+</head>
+<body>
+    <!-- API Key Modal -->
+    <div id="api-modal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-key"></i> Setup Your OpenAI API Key</h2>
+            <div class="modal-section">
+                <p>Your API key is stored securely in Vercel environment variables.</p>
+                
+                <div class="api-options">
+                    <div class="option-card" onclick="showApiSetup('vercel')">
+                        <i class="fas fa-cloud"></i>
+                        <h3>Vercel Deployment</h3>
+                        <p>Deploy with your API key in environment variables</p>
+                    </div>
+                    
+                    <div class="option-card" onclick="showApiSetup('direct')">
+                        <i class="fas fa-code"></i>
+                        <h3>Direct API Key</h3>
+                        <p>Enter your API key directly (for testing)</p>
+                    </div>
+                </div>
+                
+                <div id="vercel-setup" class="setup-instructions" style="display: none;">
+                    <h4><i class="fas fa-rocket"></i> Deploy to Vercel</h4>
+                    <p>1. Fork this repository to your GitHub account</p>
+                    <p>2. Go to <a href="https://vercel.com" target="_blank">Vercel</a></p>
+                    <p>3. Import your repository</p>
+                    <p>4. Add environment variable: <code>OPENAI_API_KEY=your_key_here</code></p>
+                    <p>5. Click Deploy!</p>
+                    <a href="https://vercel.com/new/clone?repository-url=https://github.com/yourusername/chatgpt-app" 
+                       target="_blank" class="btn btn-primary">
+                        <i class="fas fa-rocket"></i> Deploy to Vercel
+                    </a>
+                </div>
+                
+                <div id="direct-setup" class="setup-instructions" style="display: none;">
+                    <h4><i class="fas fa-keyboard"></i> Enter API Key</h4>
+                    <input type="password" id="direct-api-key" 
+                           placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                           class="api-input">
+                    <div class="btn-group">
+                        <button onclick="saveDirectApiKey()" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Key
+                        </button>
+                        <button onclick="demoMode()" class="btn btn-secondary">
+                            <i class="fas fa-play-circle"></i> Try Demo
+                        </button>
+                    </div>
+                    <p class="small-text">
+                        Get your API key from 
+                        <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-robot"></i> ChatGPT Pro</h1>
+                <button class="btn-icon" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- New Chat -->
+            <div class="sidebar-section">
+                <button class="btn btn-primary btn-block" onclick="newChat()">
+                    <i class="fas fa-plus"></i> New Chat
+                </button>
+            </div>
+            
+            <!-- Model Selection -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-microchip"></i> Model</h3>
+                <select id="model-select" class="select2">
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                </select>
+            </div>
+            
+            <!-- Chat History -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-history"></i> History</h3>
+                <div id="chat-history" class="chat-history">
+                    <!-- Chat history will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Settings -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-cog"></i> Settings</h3>
+                <div class="setting">
+                    <label>Temperature: <span id="temp-value">0.7</span></label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                </div>
+                <div class="setting">
+                    <label>Max Tokens: <span id="tokens-value">1000</span></label>
+                    <input type="range" id="max-tokens" min="100" max="4000" step="100" value="1000">
+                </div>
+                <button class="btn btn-secondary btn-block" onclick="exportChat()">
+                    <i class="fas fa-download"></i> Export Chat
+                </button>
+                <button class="btn btn-secondary btn-block" onclick="importChat()">
+                    <i class="fas fa-upload"></i> Import Chat
+                </button>
+            </div>
+            
+            <!-- Custom Instructions -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-edit"></i> Custom Instructions</h3>
+                <textarea id="custom-instructions" 
+                          placeholder="You are a helpful assistant..."></textarea>
+                <button class="btn btn-secondary btn-block" onclick="saveInstructions()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main-content">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="header-left">
+                    <h2 id="current-chat-title">New Chat</h2>
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span id="connection-status">Online</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn-icon" onclick="toggleVoiceInput()" id="voice-btn">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="btn-icon" onclick="toggleDarkMode()">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="btn-icon" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="chat-messages">
+                <div class="welcome-message">
+                    <h3>Welcome to ChatGPT Pro! 🚀</h3>
+                    <p>Select a model from the sidebar and start chatting.</p>
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="quickPrompt('Write a Python function to...')">
+                            <i class="fab fa-python"></i> Code Help
+                        </button>
+                        <button class="quick-btn" onclick="quickPrompt('Explain quantum computing in simple terms')">
+                            <i class="fas fa-brain"></i> Explain
+                        </button>
+                        <button class="quick-btn" onclick="quickPrompt('Write a creative story about...')">
+                            <i class="fas fa-book"></i> Creative Writing
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <button class="btn-icon" onclick="toggleAttachments()">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    
+                    <div class="attachment-menu" id="attachment-menu">
+                        <button onclick="triggerImageUpload()">
+                            <i class="fas fa-image"></i> Upload Image
+                        </button>
+                        <button onclick="generateImage()">
+                            <i class="fas fa-palette"></i> Generate Image
+                        </button>
+                        <button onclick="uploadFile()">
+                            <i class="fas fa-file"></i> Upload File
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                    <input type="file" id="file-upload" accept=".txt,.pdf,.doc,.docx" style="display: none;">
+                    
+                    <textarea id="message-input" 
+                              placeholder="Type your message here... (Shift+Enter for new line)"
+                              rows="1"></textarea>
+                    
+                    <div class="input-buttons">
+                        <button class="btn-icon" onclick="generateImageFromText()" title="Generate Image">
+                            <i class="fas fa-palette"></i>
+                        </button>
+                        <button class="btn-icon" onclick="speakLastMessage()" title="Read Aloud">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="send-button" class="btn btn-primary" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="input-footer">
+                    <span class="model-info">
+                        Model: <span id="current-model">gpt-3.5-turbo</span>
+                    </span>
+                    <div class="voice-status" id="voice-status" style="display: none;">
+                        <i class="fas fa-microphone"></i> Listening...
+                        <button class="btn-small" onclick="stopVoiceInput()">Stop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Generation Modal -->
+    <div id="image-modal" class="modal">
+        <div class="modal-content modal-lg">
+            <h2><i class="fas fa-palette"></i> Generate Image</h2>
+            <textarea id="image-prompt" 
+                      placeholder="Describe the image you want to generate..."
+                      rows="3"></textarea>
+            <select id="image-size" class="select2">
+                <option value="256x256">256x256</option>
+                <option value="512x512" selected>512x512</option>
+                <option value="1024x1024">1024x1024</option>
+            </select>
+            <div class="btn-group">
+                <button onclick="generateDallEImage()" class="btn btn-primary">
+                    <i class="fas fa-magic"></i> Generate
+                </button>
+                <button onclick="closeImageModal()" class="btn btn-secondary">
+                    Cancel
+                </button>
+            </div>
+            <div id="image-result"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
